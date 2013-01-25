@@ -42,6 +42,27 @@ void listening(int server_sockfd){
     }
 }
 
+void socket_recv(int sockfd){
+    char buffer[1024];
+    int recv_bytes = recv(sockfd, buffer, sizeof(buffer), 0);
+    if(recv_bytes<0){
+        printf("recv field");
+        close(sockfd);
+        return;
+    }
+    buffer[recv_bytes] = '\0';
+    printf("recv data %d bytes\r\n%s", recv_bytes, buffer);
+}
+
+void socket_send(int sockfd, const char* msg){
+    int ret = send(sockfd, msg, strlen(msg), 0);
+    if(ret<0){
+        printf("send field");
+        close(sockfd);
+        return;
+    }
+}
+
 int main(){
     int server_sockfd, client_sockfd;
     int ret,addr_len;
@@ -61,16 +82,9 @@ int main(){
         addr_len = sizeof(struct sockaddr);
         client_sockfd = accept(server_sockfd, (struct sockaddr*)(&client_addr), &addr_len);
         printf("accept ok!\r\nServer start get connect from %s : %d\r\n",inet_ntoa(client_addr.sin_addr),client_addr.sin_port);
-        int recv_bytes = recv(client_sockfd, buffer, sizeof(buffer), 0);
-        if(recv_bytes<0){
-            printf("recv field");
-            close(client_sockfd);
-        }
-        buffer[recv_bytes] = '\0';
-        printf("recv data %d\r\n%s", recv_bytes, buffer);
+        socket_recv(client_sockfd); 
         char* msg = "HTTP/1.1 200 OK\r\nContent-Type:text/html;charset=UTF-8\r\n\r\nhello world\r\n";
-        printf("msg length:%d\n",strlen(msg));
-        send(client_sockfd, msg, strlen(msg), 0);
+        socket_send(client_sockfd, msg);
         close(client_sockfd);
     }
     return 0;
