@@ -99,6 +99,7 @@ int main(){
     int epollfd = epoll_create(256);
     ev.events = EPOLLIN|EPOLLET;
     ev.data.fd = server_sockfd;
+    setnonblocking(server_sockfd);
     epoll_ctl(epollfd, EPOLL_CTL_ADD, server_sockfd, &ev);//register socket to epoll
     
     //accept loop
