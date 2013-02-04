@@ -10,6 +10,7 @@
 
 #define PORT 8080
 #define MAX_CONNS 128
+#define EPOLL_SIZE 128
 
 int create(){
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -129,7 +130,7 @@ int main(){
     int server_sockfd, client_sockfd;
     int ret,addr_len;
     struct sockaddr_in client_addr;
-    struct epoll_event events[MAX_CONNS];
+    struct epoll_event events[EPOLL_SIZE];
     char* responce_msg = "HTTP/1.1 200 OK\r\nContent-Type:text/html;charset=UTF-8\r\n\r\nhello world\r\n";
     //create
     server_sockfd = create();
@@ -140,14 +141,14 @@ int main(){
     //listen
     listening(server_sockfd); 
     
-    int efd = epoll_init(MAX_CONNS);
+    int efd = epoll_init(EPOLL_SIZE);
 
     epoll_prepare_fd(server_sockfd);
     epoll_add(efd, server_sockfd);
     
     //accept loop
     while(1){
-        int nfds = epoll_wait(efd, events, MAX_CONNS, -1);
+        int nfds = epoll_wait(efd, events, EPOLL_SIZE, -1);
         printf("epoll triggered\r\n");
         int i=0;
         for(i=0;i<nfds;i++){
