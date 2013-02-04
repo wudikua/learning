@@ -112,23 +112,23 @@ int main(){
                 client_sockfd = accept(server_sockfd, (struct sockaddr*)(&client_addr), &addr_len);
                 printf("accept ok!\r\nServer start get connect from %s : %d\r\n",inet_ntoa(client_addr.sin_addr),client_addr.sin_port);
                 setnonblocking(client_sockfd); 
-		ev.data.fd = client_sockfd;
+				ev.data.fd = client_sockfd;
                 ev.events = EPOLLIN|EPOLLOUT|EPOLLET;
                 epoll_ctl(epollfd, EPOLL_CTL_ADD, client_sockfd, &ev);//register client socket to epoll
             }else if(events[i].events==EPOLLIN){
                 client_sockfd = events[i].data.fd;
                 socket_recv(client_sockfd);
                 ev.data.fd = client_sockfd;
-		ev.events = EPOLLOUT|EPOLLET;
-		epoll_ctl(epollfd, EPOLL_CTL_MOD, client_sockfd, &ev);   
+				ev.events = EPOLLOUT|EPOLLET;
+				epoll_ctl(epollfd, EPOLL_CTL_MOD, client_sockfd, &ev);   
             }else if(events[i].events==EPOLLOUT){
                 client_sockfd = events[i].data.fd;
                 char* msg = "HTTP/1.1 200 OK\r\nContent-Type:text/html;charset=UTF-8\r\n\r\nhello world\r\n";
                 socket_send(client_sockfd, msg);
-		ev.data.fd = client_sockfd;
-		epoll_ctl(epollfd, EPOLL_CTL_DEL, client_sockfd, &ev);
-		close(client_sockfd);
-	    }
+				ev.data.fd = client_sockfd;
+				epoll_ctl(epollfd, EPOLL_CTL_DEL, client_sockfd, &ev);
+				close(client_sockfd);
+			}
         }
     }
     return 0;
