@@ -48,7 +48,7 @@ void socket_recv(int sockfd){
     char buffer[512];
     int flag = 1;
     int recv_bytes = 0;
-    printf("\r\nrecv data\r\n");
+    printf("recv data\r\n");
     while(flag){
         recv_bytes = recv(sockfd, buffer, sizeof(buffer), 0);
         if(recv_bytes<=0){
