@@ -128,7 +128,7 @@ int epoll_del(int efd, int fd){
 
 int main(){
     int server_sockfd, client_sockfd;
-    int ret,addr_len;
+    int ret,addr_len = sizeof(struct sockaddr);
     struct sockaddr_in client_addr;
     struct epoll_event events[EPOLL_SIZE];
     char* responce_msg = "HTTP/1.1 200 OK\r\nContent-Type:text/html;charset=UTF-8\r\n\r\nhello world\r\n";
@@ -149,15 +149,19 @@ int main(){
     //accept loop
     while(1){
         int nfds = epoll_wait(efd, events, EPOLL_SIZE, -1);
-        printf("epoll triggered\r\n");
+        printf("epoll triggered %d fds\r\n",nfds);
         int i=0;
         for(i=0;i<nfds;i++){
             if(events[i].data.fd==server_sockfd){
-                addr_len = sizeof(struct sockaddr);
-                client_sockfd = accept(server_sockfd, (struct sockaddr*)(&client_addr), &addr_len);
-                printf("accept ok!\r\nServer start get connect from %s : %d\r\n",(char*)inet_ntoa(client_addr.sin_addr),client_addr.sin_port);
-                epoll_prepare_fd(client_sockfd); 
-                epoll_add(efd, client_sockfd);
+                while(1){
+                    client_sockfd = accept(server_sockfd, (struct sockaddr*)(&client_addr), &addr_len);
+                    if(client_sockfd<0){
+                        break;
+                    }
+                    printf("accept ok!\r\nServer start get connect from %s : %d\r\n",(char*)inet_ntoa(client_addr.sin_addr),client_addr.sin_port);
+                    epoll_prepare_fd(client_sockfd); 
+                    epoll_add(efd, client_sockfd);    
+                }
             }else if(events[i].events==EPOLLIN){
                 printf("epoll in \r\n");
                 client_sockfd = events[i].data.fd;
