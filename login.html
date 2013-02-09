@@ -1,0 +1,29 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>客户端</title>
+</head>
+<body>
+<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.5.min.js"></script>
+<script type="text/javascript">
+function doGet(cmd){
+	$.getJSON('http://142.54.174.134:8080/?cmd=' + cmd + '&callback=?',function(data){
+		$("#resp").html(data);
+	});
+}
+function go(){
+	doGet($("#exec_string").val());
+}
+</script>
+
+<form>
+	<div>响应数据</div>
+	<div id="resp" style="height:100px"></div>
+	<textarea id="exec_string" style="height:100px"></textarea>
+	<input type="button" onclick="go()" value="excute"></input>
+</form>
+
+
+</body>
+</html>
