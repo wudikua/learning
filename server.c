@@ -25,7 +25,9 @@ int main(){
     int ret,addr_len = sizeof(struct sockaddr);
     struct sockaddr_in client_addr;
     struct epoll_event events[EPOLL_SIZE];
-    char* responce_msg = "HTTP/1.1 200 OK\r\nContent-Type:text/html;charset=UTF-8\r\n\r\nhello world\r\n";
+    struct User user[EPOLL_SIZE];
+    char* responce_msg = "HTTP/1.1 200 OK\r\nServer: kua\r\nContent-Type:text/html;charset=UTF-8\r\n\r\n{\"name\":\"helloworld\"}";
+    bzero(&user,sizeof(user));
     //create
     server_sockfd = create();
  
@@ -43,7 +45,6 @@ int main(){
     //accept loop
     while(!shutdown_flag){
         int nfds = epoll_wait(efd, events, EPOLL_SIZE, -1);
-        printf("epoll triggered %d fds\r\n",nfds);
         int i=0;
         for(i=0;i<nfds;i++){
             if(events[i].data.fd==server_sockfd){
@@ -52,23 +53,34 @@ int main(){
                     if(client_sockfd<0){
                         break;
                     }
-                    printf("accept ok!\r\nServer start get connect from %s : %d\r\n",(char*)inet_ntoa(client_addr.sin_addr),client_addr.sin_port);
+                    // printf("accept ok!\r\nServer start get connect from %s : %d\r\n",(char*)inet_ntoa(client_addr.sin_addr),client_addr.sin_port);
                     epoll_prepare_fd(client_sockfd); 
-                    epoll_add(efd, client_sockfd);    
+                    epoll_add(efd, client_sockfd); 
+                    user[client_sockfd].port =  client_addr.sin_port;
+                    user[client_sockfd].ip =  (char*)inet_ntoa(client_addr.sin_addr);
+                    user[client_sockfd].callback = NULL;
+                    user[client_sockfd].cmd = NULL;
                 }
             }else if(events[i].events==EPOLLIN){
                 printf("epoll in \r\n");
                 client_sockfd = events[i].data.fd;
-                socket_recv(client_sockfd);
+                socket_recv(client_sockfd, user);
                 epoll_set(efd, client_sockfd, EPOLLOUT);
             }else if(events[i].events==EPOLLOUT){
                 printf("epoll out \r\n");
                 client_sockfd = events[i].data.fd;
-                socket_send(client_sockfd, responce_msg);
+                socket_send(client_sockfd, user);
+                // epoll_set(efd, client_sockfd, EPOLLIN);
                 epoll_del(efd, client_sockfd);
                 close(client_sockfd);
+                free(user[client_sockfd].callback);
+                free(user[client_sockfd].cmd);
+                bzero(&user[client_sockfd],sizeof(struct User));
             }else{
                 epoll_del(efd, events[i].data.fd);
+                free(user[events[i].data.fd].callback);
+                free(user[events[i].data.fd].cmd);
+                bzero(&user[events[i].data.fd],sizeof(struct User));
                 close(events[i].data.fd);
             }
         }

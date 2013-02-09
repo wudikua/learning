@@ -38,11 +38,12 @@ void listening(int server_sockfd){
     }
 }
 
-void socket_recv(int sockfd){
+void socket_recv(int sockfd, struct User* user){
     char buffer[512];
     int flag = 1;
     int recv_bytes = 0;
     printf("recv data\r\n");
+    int first = 1;
     while(flag){
         recv_bytes = recv(sockfd, buffer, sizeof(buffer), 0);
         if(recv_bytes<=0){
@@ -51,7 +52,58 @@ void socket_recv(int sockfd){
             return;
         }else{
             buffer[recv_bytes] = '\0';
-            printf("%s", buffer);
+            if(first){
+                char temp2[64];
+                int i,j;
+                char* temp;
+                temp = strstr(buffer,"callback=");
+                if(temp != NULL){
+                    bzero(&temp2,sizeof(temp2));
+                    i=0;
+                    j=0;
+                    while(temp[i]!='\n' && temp[i] !='\r' && temp[i] !='\0' && i<64){
+                        if(temp[i]=='='){
+                            i++;
+                            while(temp[i]!='&'&&temp[i]!='\0'&&temp[i]!=' ' && i<64){
+                                temp2[j++] = temp[i++];
+                            }
+                            break;
+                        }
+                        i++;
+                    }
+                    temp2[j]='\0';
+                    if(user[sockfd].callback != NULL){
+                        free(user[sockfd].callback);
+                    }
+                    user[sockfd].callback = strdup(temp2);    
+                }
+                
+                
+                temp = strstr(buffer,"cmd=");
+                if(temp != NULL){
+                    bzero(&temp2,sizeof(temp2));
+                    i=0;
+                    j=0;
+                    while(temp[i]!='\n' && temp[i] !='\r' && temp[i] !='\0' && i<64){
+                        if(temp[i]=='='){
+                            i++;
+                            while(temp[i]!='&'&&temp[i]!='\0'&&temp[i]!=' ' && i<64){
+                                temp2[j++] = temp[i++];
+                            }
+                            break;
+                        }
+                        i++;
+                    }
+                    temp2[j]='\0';
+                    if(user[sockfd].cmd != NULL){
+                        free(user[sockfd].cmd);
+                    }
+                    user[sockfd].cmd = strdup(temp2);
+                }
+                
+            }
+            
+            //printf("%s", buffer);
             bzero(&buffer,sizeof(buffer));
         }
         if(recv_bytes==sizeof(buffer)){
@@ -59,12 +111,17 @@ void socket_recv(int sockfd){
         }else{
             flag = 0;
         }
+        first=0;
     }
-    return;
 }
 
-void socket_send(int sockfd, const char* msg){
-    int ret = send(sockfd, msg, strlen(msg), 0);
+void socket_send(int sockfd, struct User* user){
+    char resp[1024] = "HTTP/1.1 200 OK\r\nServer: kua\r\nContent-Type:text/html;charset=UTF-8\r\n\r\n";
+    int ret = -1;
+    char body[1024];
+    sprintf(body, "%s(\"IP:%s PORT:%d cmd:%s resp:%s\")", user[sockfd].callback, user[sockfd].ip, user[sockfd].port, user[sockfd].cmd, "helloworld");
+    strcat(resp, body);
+    ret = send(sockfd, &resp, strlen(resp), 0);
     if(ret<0){
         printf("send field\r\n");
         close(sockfd);
