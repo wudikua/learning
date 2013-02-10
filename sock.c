@@ -38,24 +38,29 @@ void listening(int server_sockfd){
     }
 }
 
-void socket_recv(int sockfd, struct User* user){
+int socket_recv(int sockfd, struct User* user){
     char buffer[512];
     int flag = 1;
     int recv_bytes = 0;
-    printf("recv data\r\n");
     int first = 1;
     while(flag){
         recv_bytes = recv(sockfd, buffer, sizeof(buffer), 0);
         if(recv_bytes<=0){
-            printf("recv field\r\n");
-            close(sockfd);
-            return;
+            //printf("recv field\r\n");
+            // close(sockfd);
+            printf("no input\r\n");
+            return 0;
         }else{
             buffer[recv_bytes] = '\0';
             if(first){
                 char temp2[64];
                 int i,j;
                 char* temp;
+                if(!strstr(buffer,".html")){
+                    return -1;
+                }
+
+                //得到callback的值
                 temp = strstr(buffer,"callback=");
                 if(temp != NULL){
                     bzero(&temp2,sizeof(temp2));
@@ -78,7 +83,7 @@ void socket_recv(int sockfd, struct User* user){
                     user[sockfd].callback = strdup(temp2);    
                 }
                 
-                
+                //得到cmd的值
                 temp = strstr(buffer,"cmd=");
                 if(temp != NULL){
                     bzero(&temp2,sizeof(temp2));
@@ -100,10 +105,16 @@ void socket_recv(int sockfd, struct User* user){
                     }
                     user[sockfd].cmd = strdup(temp2);
                 }
+
+                printf("temp2 : %s\r\nstrstr notify %s\r\n",temp2,strstr(temp2,"notify"));
+                if(strstr(temp2,"notify")){
+                    notify_all(user);
+                    printf("brocast msg\r\n");
+                }
                 
             }
             
-            //printf("%s", buffer);
+            printf("%s", buffer);
             bzero(&buffer,sizeof(buffer));
         }
         if(recv_bytes==sizeof(buffer)){
@@ -113,6 +124,7 @@ void socket_recv(int sockfd, struct User* user){
         }
         first=0;
     }
+    return 0;
 }
 
 void socket_send(int sockfd, struct User* user){
