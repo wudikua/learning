@@ -7,13 +7,23 @@
 <body>
 <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.5.min.js"></script>
 <script type="text/javascript">
-function doGet(cmd){
-	$.getJSON('http://142.54.174.134:8080/?cmd=' + cmd + '&callback=?',function(data){
+
+function recv(){
+	$.getJSON('http://142.54.174.134:8080/recv.html?cmd=login&callback=?',function(data){
 		$("#resp").html(data);
+		recv();
+	});
+}
+
+recv();
+
+function sendCmd(cmd){
+	$.getJSON('http://142.54.174.134:8080/recv.html?cmd=' + cmd + '&callback=?',function(data){
+		//$("#resp").html(data);
 	});
 }
 function go(){
-	doGet($("#exec_string").val());
+	sendCmd($("#exec_string").val());
 }
 </script>
 

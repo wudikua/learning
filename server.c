@@ -19,10 +19,11 @@ void signal_handler(int sig){
     shutdown_flag = 1;
 }
 
-void notify_all(struct User* user){
+void notify_all(struct User* user, int self){
     int i=0;
     for(i=0;i<EPOLL_SIZE;i++){
-        if(user[i].in_use){
+        if(i!=self && user[i].in_use){
+            user[i].resp = user[self].resp;
             socket_send(i, user);
             epoll_del(efd, i);
             close(i);
@@ -31,6 +32,14 @@ void notify_all(struct User* user){
             bzero(&user[i],sizeof(struct User));    
         }
     }
+    //responce self
+    socket_send(self, user);
+    epoll_del(efd, self);
+    close(self);
+    free(user[self].callback);
+    free(user[self].cmd);
+    free(user[self].resp);
+    bzero(&user[self],sizeof(struct User));    
 }
 
 int main(){
@@ -75,6 +84,7 @@ int main(){
                     user[client_sockfd].ip =  (char*)inet_ntoa(client_addr.sin_addr);
                     user[client_sockfd].callback = NULL;
                     user[client_sockfd].cmd = NULL;
+                    user[client_sockfd].resp = NULL;
                     user[client_sockfd].in_use = 1;
                 }
             }else if(events[i].events==EPOLLIN){
@@ -93,7 +103,8 @@ int main(){
                 client_sockfd = events[i].data.fd;
                 if(user[client_sockfd].cmd && strstr(user[client_sockfd].cmd,"notify")){
                     printf("brocast msg\r\n");
-                    notify_all(user);
+                    user[client_sockfd].resp = strdup(strstr(user[client_sockfd].cmd,":"));
+                    notify_all(user, client_sockfd);
                 }else{
                     epoll_set(efd, client_sockfd, EPOLLIN);    
                 }
@@ -103,6 +114,7 @@ int main(){
                 epoll_del(efd, events[i].data.fd);
                 free(user[events[i].data.fd].callback);
                 free(user[events[i].data.fd].cmd);
+                free(user[client_sockfd].resp);
                 bzero(&user[events[i].data.fd],sizeof(struct User));
                 close(events[i].data.fd);
             }

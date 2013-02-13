@@ -7,6 +7,7 @@ struct User{
     char* ip;
     char* callback;
     char* cmd;
+    char* resp;
     int in_use;
 };
 

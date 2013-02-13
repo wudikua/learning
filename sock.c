@@ -105,13 +105,6 @@ int socket_recv(int sockfd, struct User* user){
                     }
                     user[sockfd].cmd = strdup(temp2);
                 }
-
-                printf("temp2 : %s\r\nstrstr notify %s\r\n",temp2,strstr(temp2,"notify"));
-                if(strstr(temp2,"notify")){
-                    notify_all(user);
-                    printf("brocast msg\r\n");
-                }
-                
             }
             
             printf("%s", buffer);
@@ -131,7 +124,7 @@ void socket_send(int sockfd, struct User* user){
     char resp[1024] = "HTTP/1.1 200 OK\r\nServer: kua\r\nContent-Type:text/html;charset=UTF-8\r\n\r\n";
     int ret = -1;
     char body[1024];
-    sprintf(body, "%s(\"IP:%s PORT:%d cmd:%s resp:%s\")", user[sockfd].callback, user[sockfd].ip, user[sockfd].port, user[sockfd].cmd, "helloworld");
+    sprintf(body, "%s(\"IP:%s PORT:%d cmd:%s resp:%s\")", user[sockfd].callback, user[sockfd].ip, user[sockfd].port, user[sockfd].cmd, user[sockfd].resp);
     strcat(resp, body);
     ret = send(sockfd, &resp, strlen(resp), 0);
     if(ret<0){
