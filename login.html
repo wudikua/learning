@@ -10,15 +10,16 @@
 
 function recv(){
 	$.getJSON('http://142.54.174.134:8080/recv.html?cmd=login&callback=?',function(data){
-		$("#resp").html(data);
+		$("ul").append("<li>"+data+"</li>"); 
+		// $("#resp").html(data);
 		recv();
 	});
 }
 
 recv();
 
-function sendCmd(cmd){
-	$.getJSON('http://142.54.174.134:8080/recv.html?cmd=' + cmd + '&callback=?',function(data){
+function sendCmd(msg){
+	$.getJSON('http://142.54.174.134:8080/recv.html?cmd=notify:' + msg + '&callback=?',function(data){
 		//$("#resp").html(data);
 	});
 }
@@ -26,10 +27,13 @@ function go(){
 	sendCmd($("#exec_string").val());
 }
 </script>
-
 <form>
 	<div>响应数据</div>
-	<div id="resp" style="height:100px"></div>
+	<div id="resp" style="height:300px">
+		<ul>   
+	      
+	    </ul>
+	</div>
 	<textarea id="exec_string" style="height:100px"></textarea>
 	<input type="button" onclick="go()" value="excute"></input>
 </form>
