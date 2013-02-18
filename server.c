@@ -23,22 +23,23 @@ void notify_all(struct User* user, int self){
     int i=0;
     for(i=0;i<EPOLL_SIZE;i++){
         if(i!=self && user[i].in_use){
-            user[i].resp = user[self].resp;
-            socket_send(i, user);
+            socket_send(user, i, self);
             epoll_del(efd, i);
             close(i);
             free(user[i].callback);
             free(user[i].cmd);
+            free(user[i].uname);
             bzero(&user[i],sizeof(struct User));    
         }
     }
     //responce self
-    socket_send(self, user);
+    //socket_send(user, self, self);
     epoll_del(efd, self);
     close(self);
     free(user[self].callback);
     free(user[self].cmd);
     free(user[self].resp);
+    free(user[self].uname);
     bzero(&user[self],sizeof(struct User));    
 }
 
@@ -84,6 +85,7 @@ int main(){
                     user[client_sockfd].ip =  (char*)inet_ntoa(client_addr.sin_addr);
                     user[client_sockfd].callback = NULL;
                     user[client_sockfd].cmd = NULL;
+                    user[client_sockfd].uname = NULL;
                     user[client_sockfd].resp = NULL;
                     user[client_sockfd].in_use = 1;
                 }
@@ -103,7 +105,18 @@ int main(){
                 client_sockfd = events[i].data.fd;
                 if(user[client_sockfd].cmd && strstr(user[client_sockfd].cmd,"notify")){
                     printf("brocast msg\r\n");
-                    user[client_sockfd].resp = strdup(strstr(user[client_sockfd].cmd,":"));
+                    char* p = strstr(user[client_sockfd].cmd,":");
+                    user[client_sockfd].resp = malloc(sizeof(char)*128);
+                    int m=0,n=strlen(p),k=0;
+                    for(m=0; m<n; m++){
+                        if(p[m]==':'){
+                            m++;
+                            while(p[m]!=':' && m<n){
+                                user[client_sockfd].resp[k++] = p[m++];
+                            }
+                            break;
+                        }
+                    }
                     notify_all(user, client_sockfd);
                 }else{
                     epoll_set(efd, client_sockfd, EPOLLIN);    
@@ -114,6 +127,7 @@ int main(){
                 epoll_del(efd, events[i].data.fd);
                 free(user[events[i].data.fd].callback);
                 free(user[events[i].data.fd].cmd);
+                free(user[events[i].data.fd].uname);
                 free(user[client_sockfd].resp);
                 bzero(&user[events[i].data.fd],sizeof(struct User));
                 close(events[i].data.fd);
