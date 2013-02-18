@@ -8,25 +8,35 @@
 <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.5.min.js"></script>
 <script type="text/javascript">
 
-function recv(){
-	$.getJSON('http://142.54.174.134:8080/recv.html?cmd=login&callback=?',function(data){
+function recv(uname){
+	$.getJSON('http://127.0.0.1:8080/recv.html?cmd=login:'+uname+'&callback=?',function(data){
 		$("ul").append("<li>"+data+"</li>"); 
 		// $("#resp").html(data);
-		recv();
+		recv(uname);
 	});
 }
 
-recv();
-
 function sendCmd(msg){
-	$.getJSON('http://142.54.174.134:8080/recv.html?cmd=notify:' + msg + '&callback=?',function(data){
+	var uname = $("#login_name").val();
+	$.getJSON('http://127.0.0.1:8080/recv.html?cmd=notify:' + msg + ':login:'+ uname +'&callback=?',function(data){
 		//$("#resp").html(data);
 	});
 }
 function go(){
 	sendCmd($("#exec_string").val());
 }
+function login(){
+	$("#login_box").hide();
+	recv($("#login_name").val());
+}
 </script>
+<form>
+	<div id="login_box">
+		<h2>input user name<h2>
+		<input type="text" id="login_name"></input>
+		<input type="button" onclick="login()" value="login">
+	</div>
+</form>
 <form>
 	<div>响应数据</div>
 	<div id="resp" style="height:300px">
