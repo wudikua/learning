@@ -104,6 +104,19 @@ int socket_recv(int sockfd, struct User* user){
                         free(user[sockfd].cmd);
                     }
                     user[sockfd].cmd = strdup(temp2);
+
+                    char* p = strstr(user[sockfd].cmd,"login");
+                    int i=0,j=0,n=strlen(p);
+                    user[sockfd].uname = malloc(sizeof(char)*16);
+                    for(i=0; p[i] != '\n' && i<n; i++){
+                        if (p[i] == ':') {
+                            i++;
+                            while (p[i] != '&' && i<n ) {
+                                user[sockfd].uname[j++] = p[i++];
+                            }
+                        }
+                    }
+                    user[sockfd].uname[j] = '\0';
                 }
             }
             
@@ -120,16 +133,16 @@ int socket_recv(int sockfd, struct User* user){
     return 0;
 }
 
-void socket_send(int sockfd, struct User* user){
+void socket_send(struct User* user, int sendfd, int fromfd){
     char resp[1024] = "HTTP/1.1 200 OK\r\nServer: kua\r\nContent-Type:text/html;charset=UTF-8\r\n\r\n";
     int ret = -1;
     char body[1024];
-    sprintf(body, "%s(\"IP:%s PORT:%d cmd:%s resp:%s\")", user[sockfd].callback, user[sockfd].ip, user[sockfd].port, user[sockfd].cmd, user[sockfd].resp);
+    sprintf(body, "%s(\"user %s says:%s\")", user[sendfd].callback, user[fromfd].uname, user[fromfd].resp);
     strcat(resp, body);
-    ret = send(sockfd, &resp, strlen(resp), 0);
+    ret = send(sendfd, &resp, strlen(resp), 0);
     if(ret<0){
         printf("send field\r\n");
-        close(sockfd);
+        close(sendfd);
         return;
     }
 }
